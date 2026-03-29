@@ -1,0 +1,403 @@
+@@@@@    AIRBNB MAJOR PROJECT   @@@@@
+           <<>><><><><><><><><><<><<><><><<>><><>   PHASE 1  <><><><><><><<><<><><><<>><><><><><><><><><<><<><><>
+ |   ************** PERFORMING CRUD OPERATIONS AND MAKING RESTFUL APIs ************************************|
+ |  ## Downloaded required pakages and made app.js file ##                                                 |
+ |  npm init -y  ---> to create package.json file                                                          |
+ |  npm i express                                                                                          | 
+ |  npm i ejs                                                                                              | 
+ |  npm i mongoose
+    touch app.js
+
+    # touch app.js: write basic express code and mongoose connection code
+    const express = require("express");
+    const app = express();
+    const mongoose =require("mongoose");
+    const MONGO_URL ="mongodb://127.0.0.1:27017/wanderlust";
+    main()
+      .then(()=>{
+        console.log("connected to DB");
+      })
+      .catch((err)=>{
+        console.log(err);
+      });
+    async function main(){
+        await mongoose.connect( MONGO_URL);
+    }
+    app.get("/",(req,res)=>{
+        res.send("Hi,I am root");
+    });
+    app.listen(8080,()=>{
+        console.log("server is listening to port 8080");
+    })
+
+    ## Create Sample data through listing.js file
+    We will many data models , to store this data model we will make folder named as "models" to store those data models.
+    This project incluse information of different places. On our website we will be providing image and related information of place .
+    Information like its name , priice ,location,country,image,etc.we will make model for this in listing.js file
+
+    #listing.js
+    Require mongoose , create Schema , create model , add testData , export module.
+    * Prepare test route for initial data into app.js file.
+    app.get("/testListing",async (req,res)=>{
+      let sampleListing =new Listing({
+        title:"My New Villa",
+        description:"By the beach",
+        price:1200,
+        location:"Calangute, Goa",
+        country:"India",
+      });
+      await sampleListing.save();
+      console.log("sample was saved");
+      res.send("successful testing");
+    });
+
+    ## Initializing Database
+    If in case we delete all data we need some sample data.So,in "init.js" file we will store some sample data.
+    Whenever dataset become empty we will run "init.js" so that we can get sample data. and we will add data Initializing logic in another file named as "index.js"
+
+    ## Creating Index route
+    Index route = "/listings" will contain list of all places in anchor link format.By clicking on any place link we can view that particular place in detail.
+    Here we make "index.ejs" file to render all places list on browser.
+    Also to access ".ejs" files we added their path by adding following lines:
+    const path = require("path");
+    app.set("view engine","ejs");
+    app.set("views",path.join(__dirname,"views"));
+
+    ## Creating Show route
+    Show route ="/listings/:id" will display information of particular place in detail by clicking on its hyperlink.
+    For that we will first fetch id by using "req.params" and then use "findBYId()" to search info of paricular link .
+    And then render the results using "show.ejs" file. 
+    For price parameter in "show.ejs" we added rupees symbol by simply adding symbols code.And also to add commas we add "toLocaleString(en-IN)". "en-IN" represents India.
+
+    ## Creating new listing .
+    It will include two routes .
+    1. "NEW ROUTE"-->GET request -->"/listings/new". we will add create button on index page by clicking on that button form will get open "new.ejs".
+    2.   Once "new.ejs" form get submitted POST request goes to route-->"/listings"-->"CREATE ROUTE", then new listing is created.
+    As we have to fetch many(6) parameters from request body instead of writing "let{title,description,image,price,location,country}=req.body;" we create single object of all these parameters.
+    In "new.ejs" we write name="listing[title]" instead of just name=title, to make listing object.Then write " const newListing=new Listing(req.body.listing)"--> to fetch parameters get from POST request.
+    await newListing.save(); res.redirect("/listings");
+
+    ## Updating the listing
+    It will contain 2 routes.
+    1.Edit Route -->GET request -->"/listings/:id/edit" .It will render "edit.ejs" form to edit listing.
+    2.Update Route--> PUT request -->"/listings/:id".Once "edit.ejs" form is submitted and then PUT request is performed.It will update the post and redirect to index page.
+    HTML doesn't allow put request directly.So, we need to install package "method-override".And add following lines into app.js file :
+    const methodOverride = require("method-override");
+    app.use(methodOverride("_method"));
+|                                                                                                                                                                                  |
+|   ## Deleting the listing                                                                                                                                                        |         
+|   Added a delete button into "show.ejs" into form tag . form tag is of action PUT request.                                                                                       | 
+|   After buttun clicking listing get deleted  and we redirect to index page.                                                                                                      |
+|   *******************************************************************************************************************************************************************************|
+
+  | ************************** ADDING STYLE TO THE WEBSITE ***************************************************************************************************************************************************|
+  | #Making Boilerplate                                                                                                                                                                                       |  
+  | here "ejs-mate" pakage is used  to create Boilerplate,means  part on website common in multiple pages .                                                                                                   |
+  | Install "ejs-mate" --> const ejsMate =require("ejs-mate");app.engine('ejs',ejsMate); --> Delete All things except <body> where boilerplate is needed and add "<% layout("/layouts/boilerplate")%>" on top.|
+  | Public folder is made to add stylesheets,we can also connect these stylesheet to boilerplate.                                                                                                             |
+
+   # Creating Navbar and include it in Boilerplate
+   Navbar will be common part in multiple pages, so we will make separate template of it .It will act as suptemplates, "includes --> navbar.ejs"
+   Code will fetch from Bootstrap(Nav-->anchor tag type).Add 2 links, one in link section and javascript one just before body tag ends.
+   to include "navbar.ejs" into Boilerplate add  code "<%- include("../includes/navbar.ejs") %>" in "boilerplate.ejs".
+  Change href links according to our project from navbar code of boilerplate .Add styling by changing existing classes and "style.css" file.
+  Fetch icons from "Font Awesome" and add its cdn link into link section.
+
+  # Creating Footer
+  includes --> footer.ejs
+  Add Socials media links And Privacy & Terms.
+  Include it in "boilerplate.ejs".Add styling through "style.css"
+
+  # Styling Index page
+  Editing "index.ejs" adding all content in common div with class row and then styling is done through "style.css".
+  Font use is "Jakarta sans "
+   <ul>
+         <% for(let listing of allListings){ %> 
+    <li>  <a href="/listings/<%= listing._id %>"> <%= listing.title%></a></li>     
+       <% } %>
+    </ul> 
+    Above code is replaced by card code from Bootstrap.
+  |  Added Overlay effect on Cards.                                                                                                                                                |
+  |                                                                                                                                                                                |                         
+  |  # Styling New page & Edit Page                                                                                                                                                |
+  |  Every component is added into div and styled using Bootstrap inbuilt classes and "style.css"                                                                                  |
+  |********************************************************************************************************************************************************************************|  
+
+|********************************************************* ERROR HANDLING *******************************************************************************************************************************************************************************************************************************************************************|
+|    ## Creating client side validation form                                                                                                                                                                                                                                                                                                 |
+|    When we enter data in a form, the browser and/or the web server will check to see that the data is in the correct format and within the constraints set by the application.                                                                                                                                                             |  
+|    There are two types of form validation as follows"                                                                                                                                                                                                                                                                                      |
+|    (i) Client side - means data from frontend through a form is send correctly to the backend, following all validations rules.                                                                                                                                                                                                            |
+    (ii) Server side - means data fetched by client through form should be saved correctly into database and correct schema is followed. Also errors are handled properly.
+    (i)For handling client side form validation we can set all fields as required. But by using required it will follow browser rules means chrome can show different results and safari can show other results.
+       to avoid this and mantain same results in all types of browsers we will use "BootStrap" classes which  set css standardized result.
+       BootStrap --> Forms --> validation -->add class="needs-validation" and field "novalidate"--> also add JS logic into (public-->js-->script.js)-->Add the "script.js" file into boilerplate  "<script src="/js/script.js"></script>"
+    ## Adding Success and Failure Text 
+    Means while filling any form, when we fill value of any field is it success or failure.Success means okay text and follows Validation rules ,it will display in green color,use "valid-feedback" to implement this.Failure means Validation rules are not followed, it will display red in color,use "invalid-feedback" to implement this.
+    ## Maintaining Server side validation.
+    First we tried to handle it by adding "Error Handling Middleware" at bottom of code and putting "Create Route" code into "try-catch" block.
+    But there is better way to handle this ,by using "wrapAsync".
+    We will add new folder"utils" , in which we will add code of wrapAsync into "wrapAsync.js" file.And then replacing "try-catch" block by just adding "wrapAsync" before word async.
+    Now, even if we enter invalid information , we will be get error on browser but server will not get crash.Make all async functions "wrapAsync"
+    ## using ExpressError for "Error Handling"
+    In above we sent same type of error. But by ExpressError we can send custom error including status code and message of exact error.
+    utils --> ExpressError.js .This file will contain ExpressError class of which we can make instances later wherever needed.Also we should require it in "app.js" file.
+    to create common route that will throw "Page not found" error whenever we try to search route other than existing ones.
+
+  "  app.use((req, res, next) => {
+    next(new ExpressError(404, "Page Not Found!"));
+});
+app.use((err,req,res,next) => {
+    let {statusCode=500, message="Something went wrong!"} = err;
+    res.status(statusCode).send(message);
+}); "
+# Example of costom error using ExpressError
+if(!req.body.listing){
+        throw new ExpressError(400,"Send valid data for listing");
+    }
+
+## Making Error Page
+By using ExpressError we get exact message but still it is not good looking.So, we will make separate Error Page "error.ejs".BootStrap "Alert" classes are used here.
+## Using "joi"
+By adding if statement with ExpressError we can check validation for single field at once.for others fields we need to write if statement for each field separately.Adding separately will be tedious job.
+Intead we will use "joi" npm package used for object schema validation and helps with server side schema validation.
+npm i joi --> make "schema.js" .After this we can replace all if statement with following:
+"let result = listingSchema.validate(req.body);
+    console.log(result);
+    if(result.error){
+        throw new ExpressError(400,result.error);
+    }  "
+
+##Making Validation Schema Middleware
+   " const validateListing = (req,res,next)=>{
+  let {error} = listingSchema.validate(req.body);
+    if(error){
+        let errMsg = error.details.map((el)=> el.message).join(",");
+        throw new ExpressError(400,errMsg);
+    }else{
+        next();
+    }  
+ };  "
+ to validate listing object before saving.Also along with this code add it as parameter where we suppose to add listing(create,update(post requests)) 
+ Example: app.post("/listings", validateListing,
+|    wrapAsync(async (req,res,next)=>{const newListing=new Listing(req.body.listing);                                                                                                         |
+|    await newListing.save();                                                                                                                                                                 |
+|     res.redirect("/listings");                                                                                                                                                              |
+|  }));                                                                                                                                                                                       |
+|*********************************************************************************************************************************************************************************************|
+
+<><><><><><><<><<><><><<>><><><><><><><><><<><<><><><><><><><><><<><<><><><<>>  PHASE 2  <><><><><><><><><<><<><><><><><><><><><<><<><><><<>><><><><><><><><><<><<><><><><><><><><><<><<><><><<>
+## Creating Riviews for each listing.
+In listing Schema review attribute is added into "listing.js" .
+"  reviews: [{  type: Schema.Types.ObjectId, ref: "Review", }]. Also Schema for review is made in "models -->review.js"
+review form is made in "show.ejs" with added some bootstrap classes.
+As we are adding the reviews So we will make POST request on route "/listings/:id/reviews"
+require Review Schema "const Review =require("./models/review.js");"
+# Adding Validations to reviews
+(i)Client side validation:add class "needs-validation" and field "novalidate"
+(ii)Server side Validation:
+We will make Joi based Review Schema into "schema.js"-->require Review Schema "const {listingSchema, reviewSchema} = require("./schema.js");"--> Make "validateReview" function to validate reviews-->
+ Add "validateReview" as a Middleware into POST request route of reviews.For Error Handling "wrapAsync" is added.
+ we will render all reviews under Review Form including reviewcomment and its rating(changes into "show.ejs")
+ Styling reviews by putting them into a row class using BootStrap.
+
+ ## To delete review by delete Button along with reviewId from listing.
+ To delete a review we will add Delete Button(into form tag) under every review in "show.ejs".And will send "DELETE" request on route "/listings/:id/reviews/:reviewId".
+ "app.delete("/listings/:id/reviews/:reviewId",wrapAsync(async(req,res)=>{
+ let {id, reviewId} = req.params;
+ //to delete review from listing.review array
+ await Listing.findByIdAndUpdate(id, {$pull: {reviews: reviewId}});
+ //to delete review from review collection
+ await Review.findByIdAndDelete(reviewId);
+ res.redirect(`/listings/${id}`);
+})) "
+Here "$pull" is used: $pull operator removes from an existing array all instances of a value or values that match a specified condition.
+
+## To delete review from review collection when we delete any listing.
+Make "POST Mongoose Middleware" in "listing.js"
+" listingSchema.post("findOneAndDelete",async(listing)=>{
+if(listing){
+    await Review.deleteMany({_id : {$in: listing.reviews}});+
+} 
+}); "  Also require Review Schema in "listing.js" file
+Now when "findByIdAndDelete" will get call above Middleware will get trigger and "findOneAndDelete" get perform.
+
+## We used "Express Router" to organize code and make "app.js" file less bulky.
+After this, all things will work well except adding reviews.Because callback of this functionality needs listing_id which we have keep in parent file "app.js" , as route 
+"app.use("/listings/:id/reviews",reviews);" so in child file(review.js) we can fetch anything after this route.But what we need is in parent file.To make id available in child 
+file add  "const router = express.Router({ mergeParams:true });"  in "review.js" .
+
+## Implementing cookies
+USING EXPRESS SESSION
+install express-session "npm i express-session" --> require it --> Add session Options --> app.use(session(sessionOptions)); --> Add required middlewares and routes.
+USING FLASH
+install "npm i connect-flash" --> require it --> "app.use(flash());" insert it above routes --> add flash statement wherever needed (here after new listing is created "req.flash("success","New Listing Created!")") -->
+add middleware in app.js --> access it from required ejs file (here "index.ejs") --> <%= success %>
+We can make alert look good by adding Bootstrap classes.We added all styling in separate file "flash.ejs"
+
+## Implementing Authentication and authorization
+Make User Schema into "models --> user.js "
+Require passport , localstragey and user model in "app.js"
+#To implement it add in "app.js" following lines referenced from Docmentation
+" app.use(passport.initialize());
+  app.use(passport.session());
+  passport.use(new LocalStrategy(User.authenticate()));
+  passport.serializeUser(User.serializeUser()); //serialized - to store session related user information
+  passport.deserializeUser(User.deserializeUser()); //deserialized - to remove session related user information "
+  Making Demo user by adding "/demouser" route in "app.js"
+  Make Signup routes one GET requst and one POST request
+
+  - To check if user is logged in or not we will use Express static function "isAuthenticate()".As to perform CRUD operations on listings   we should be loggged in first.So will need to specify "isAuthenticate()" function in each route.
+    Instead of it we will write code once is "middleware.js" file.
+  - Making "/logout" route using passport's "req.logout" method
+  - Displayed Signup, Login and Logout options in navbar by "navbar.js" using bootstrap classes
+  - Adding functionality such that if user is loggedIn he can see only "logout" option and if not login he will see "Signup" and "Login" options.
+  - Up till now we observe that once we signup we also need to login afterwards.But when we use other websites we can see that once we signup, we automatically get login.
+    to implement this functionality we will use "req.login" method of passport.which automatically get triggered once we signup.
+  - as when we try to perform CRUD operations on listings website first tells to login , and once we login it redirects us to "/listings" instead of that CRUD operation page , which causes unconvenience to users .
+    to avoid this we try to save the path user tried to access before login , sothat one user will login we can direct him to that previous path.
+    As "req.session" has access of path we try t access even if we unable to get the results(page not found error) req.session saves the path.
+    So we will first featch the Url from session object as "req.session.originalUrl" and then saves as follows " req.session.redirectUrl = req.originalUrl;"
+    But to make this url accessible everywhere we need to store it in res.local variable , code of which had included in "middleware.js" as "saveRedirectUrl" middleware. And then add this same middleware into "/login" route.
+  - There is another loophole: whwn usertry to login first instead of CRUD operations,it should be redirected to "/listings" but he can't. Because for "res.redirect(res.locals.redirectUrl)" value is undefined .
+    So solve this we added following logic
+    " let redirectUrl = res.locals.redirectUrl || "/listings";
+        res.redirect(redirectUrl); "   
+
+## Associating owner to each listing.
+- Added owner attribute in listing schema.
+- But to add this attribute in existing listings we need to reinitialize the listings data prsent in "data.js"  using code written in "index.js"
+  copying any one user_id and paste it in "index.js" code as follows
+  "initData.data = initData.data.map((obj) => ({...obj,owner:"69773bff7f548e76a106cb0e"}));" and then run the file
+- customize how it will look by doing changes in "listing.js --> Show Route". Also changes in "show.ejs" file.
+- But now when we add new listing , owner is not added , to add owner, as we know in our request object passport saves user related information into "req.user".
+  So,we will add follwing line into "listing.js --> Create Route"
+  "newListing.owner = req.user._id;"
+
+##### Starting with Authorization
+Hiding Edit and Delete button from users other than listing owner.
+- For this we will need two variables : owner of listing and current login user.We already added values of these two.
+  We will campare these two values if match delete and edit button will be visible and hide otherwise.
+  Added logic in "show.ejs" as follows
+  "<% if(currUser && currUser._id.equals(listing.owner._id)) { %>" to show or hide buttons.
+
+- Even if we hide the buttons, one can edit or delete listing or review through hoppscoth request. So,to protect this route we need to apply  Authorization logic to these routes,instead of applying logic to hide buttons.
+  # Authorization for listings
+  As we first check if user is logged In or not by "isLoggedIn" middleware, we will make another middleware named as "isOwner" to campare current user id and loggedIn user id.Added in "middleware.js" file.
+  Also require required things .here Listing model will require.
+- We can further add all middlewares present in routes-->"listing.js" and "review.js" in middleware.js file.And then require required things like ExpressError,etc.  
+# Authorization for Reviews
+- Associate author to each review through review schema.
+- frontend security - Make changes in "show.ejs" file , unable to add reviews if not login.
+- backend security - insert "isLoggedIn" middleware into POst route of reviews.And also store author of review whenever new review is added by addiing following logic
+"let newReview = new Review(req.body.review);
+    newReview.author= req.user._id; "
+  #display author of review with each review using nested populate
+ " .populate({
+        path:"reviews",
+        populate:{
+            path:"author",
+        },
+    }) "
+    into routes-->listing.js
+- add following code in "show.ejs"  "<div class="card-title">@<%= review.author.username %> </div>"  to make review's author name with review on review page.
+
+# Authorization to delete any review
+ - Check who tries to delete the review is it's owner or not by middleware "isReviewAuthor".And then add this middleware into Delete route of review
+   require Review model into "middleware.js" file.
+
+<><><><><><><<><<><><><<>><><><><><><><><><><><><><><><<><<><><><<>><><> PHASE 3 <><><><><><><<><<><><><<>><><><><><><><><><><><><><><><<><<><><><<>><><><><><><><><>
+## Implementing MVC
+customize routes present in routes folder.Tranfer implementation code in "controllers" folder and just name of it in "routes" folder in specific route.
+## Using Route.route
+It is used to merge similar paths.
+Example:
+//INDEX ROUTE
+router.get("/",wrapAsync(listingController.index));
+//CREATE ROUTE
+router.post("/",
+    isLoggedIn,
+    validateListing,
+    wrapAsync(listingController.createListings));
+    Above code is replaced by
+    " router.route("/")
+      .get(wrapAsync(listingController.index))
+      .post(
+          isLoggedIn,
+          validateListing,
+          wrapAsync(listingController.createListings)); "
+
+## Re-styling rating
+   - Instead of using range input, ratings is replaced by Stars by using "Starability.css" from github.
+   - follow steps mentioned in Read.ME file for implementation.
+   - Insert css file copy-paste into "public-->css-->ratings.css" then add fieldset from github file.
+
+## Upload image
+Problems occur while uploading images as follows:
+1.till now sending raw data to backend is possible but sending any document is not possible because we send urlencoded data.
+2.As mongodb stores BSON type of data, which includes size limit to store documents.
+Solution as follows
+a. making form capable of sending files
+b. use third party service to store files , these third party service will provide URL/Link of stored image
+c. save the URL/Link in mongodb
+- Manipulating form
+  we will try to change datatype from urlencoded to "multipart/form-data" by adding line  "enctype="multipart/form-data" into "new.ejs" file in form component.
+Make input type of "Upload Listing Image" as "type='file'" instead of "text".
+To parse "multipart/form-data" we will use "multer" npm package.Add code lines in "routes-->listing.js" as follows:
+" const multer  = require('multer')
+const upload = multer({ dest: 'uploads/' })  "
+Add following route in "listing.js" 
+" .post( upload.single('listing[image]'),(req,res)=> {
+    res.send(req.file);
+});  "
+it means when post request goes line "upload.single('listing[image]')"  saves uploaded single image into uploads folder.  " res.send(req.file);" is used req.file is object like req.body which stores information related to file.
+## Using Cloudinary as a third party service
+  It provides us some credentials like cloud API ,ect. which we will save into ".env" file. To access credentials written into ".env" file we use npm library named as "dotenv" and add follwing lines of code into "app.js" file
+  "  require('dotenv').config(); 
+     console.log(process.env.SECRET);"   Here, "SECRET" is credential variabe name included in ".env" file. This process is used only whwn we are in our development phase.
+    # Process for production phase.Add follwing code 
+    " if(process.env.NODE_ENV != "production"){ 
+      require('dotenv').config(); }    "    Here, we will not include console line as we didn't want to print credentials.And save important credentials into ".env" file.
+    # Process of storing files
+      install two packages from npmjs.com as "cloudinary" and "multer-storage-cloudinary"
+      Make cloudConfig.js file to add the code to access Cloudinary Account.module.exports cloudinary and storage and then require {storage} into "routes-->listing.js"
+      change "const upload = multer({ dest: 'uploads/' });" from "listing.js" to "const upload =multer({storage}); as we have access third party storage so we no longer needed "uploads" folder for same purpose. we can also now delete uploads folder
+    # Process to store image link provided by cloudinary to MongoDB database.
+      Modify image field of listing Schema. Normally it is in string form we will make it consist of two attributes as url and filename.here we reinitialized data by replacing data.js file.
+      Also change "listing.image"--> "listing.image.url" in index.js ,show.ejs
+      add code line "upload.single("listing[image]") before validateListing ,wherever we tried to fetch any image like while Creating a new listing.
+      Fetch url and filename from "req.file" and save it in a variable
+
+   ## implementing above same method for edit form.
+   change form enctype , change type of image field to "file" from "text", add "upload.single("listing[image]") " to make parsing possible,
+   fetch url and filename from req.file and make some change into updateListing code written into controllers --> listings.js
+   previewing image into edit form , which will help to decide user whether to change the image or not , using cloudinary features by adjusting image hight and width by making changes into url.
+
+### Implementing Map feature.
+We will use free Map API for this --> "Mapbox". Make Account on Mapbox. Save Public token into ".env" file
+Into Mapbox go to  All docs--> Mapbox GL JS-->Examples -->Change a map's style 
+From Mapbox code add css and javascript links into boilerplate head section.added map div into "show.ejs" page as shown in mapboc code.
+Add code written into <script></script> tag to public folder(map.js).
+As map token will not access directly into "map.js" as it is in ejs file .So (show.ejs) will will store it into script tag at top of a file, and then add the link of that script into bottom of "show.ejs".The logic used here is that top script tage will run first and access mapToken and then bottom script will execute. 
+
+## Performing Geocoding
+Geocoding: It is the process of converting addresses(like a street address) into geographic coordinates(like latitude and longitude), which you can use to place markers on a map, or position the map.
+copy paste forwadgeocoding code from mapbox and then fetch coordinates.
+#Storing Coordinates.
+Added geometry field into listing schema , and following code is added into "controllers --> listing.js-->cretelisting callback
+"  newListing.geometry= response.body.features[0].geometry; "
+#To display map of same location entered with listing info
+Store coordinates into top of "show.ejs" by following code:
+  const coordinates =" <%- JSON.stringify(listing.geometry.coordinates) %>" ;
+  Make changes into "map.js" file and also add Marker code into "map.js"file from Mapbox documentation.
+# Markup Popup
+
+
+  
+
+
+
+
+
+   
+
